@@ -4,6 +4,13 @@
 # By Jed Smith <jed@jedsmith.org> 4/29/2009
 # This code and associated documentation is released into the public domain.
 #
+# Updated by Mike Swanson <rearden@atlantisvalley.com> 12/2/2012
+# It appears there have been some changes to how to json load method works
+# (it returns a list of dicts now, not just a single dict.)  Also, 
+# the string request names are now in a dot syntax rather than the uppercase
+# delimited format used originally in this script.  The API call for listing
+# a DNS resource now also requires a domainID in addition to the resourceID.
+#
 # This script **REQUIRES** Python 3.0 or above.  Python 2.6 may work.
 # To see what version you are using, run this:
 #
@@ -32,7 +39,8 @@
 #                                                                    ^
 # You want 123456. The API key MUST have write access to this resource ID.
 #
-RESOURCE = "000000"
+RESOURCE = "0000000"
+DOMAIN = "000000"
 #
 # Your Linode API key.  You can generate this by going to your profile in the
 # Linode manager.  It should be fairly long.
@@ -47,7 +55,7 @@ KEY = "abcdefghijklmnopqrstuvwxyz"
 #     header("Content-type: text/plain");
 #     printf("%s", $_SERVER["REMOTE_ADDR"]);
 #
-GETIP = "http://hosted.jedsmith.org/ip.php"
+GETIP = "http://zxcvfdsa.com/ip.php"
 #
 # If for some reason the API URI changes, or you wish to send requests to a
 # different URI for debugging reasons, edit this.  {0} will be replaced with the
@@ -122,21 +130,21 @@ def ip():
 
 def main():
 	try:
-		res = execute("domainResourceGet", {"ResourceID": RESOURCE})["DATA"]
+		res = execute("domain.resource.list", {"DomainID": DOMAIN, "ResourceID": RESOURCE})["DATA"]
 		if(len(res)) == 0:
 			raise Exception("No such resource?".format(RESOURCE))
 		public = ip()
-		if res["TARGET"] != public:
-			old = res["TARGET"]
+		if res[0]["TARGET"] != public:
+			old = res[0]["TARGET"]
 			request = {
-				"ResourceID": res["RESOURCEID"],
-				"DomainID": res["DOMAINID"],
-				"Name": res["NAME"],
-				"Type": res["TYPE"],
+				"ResourceID": res[0]["RESOURCEID"],
+				"DomainID": res[0]["DOMAINID"],
+				"Name": res[0]["NAME"],
+				"Type": res[0]["TYPE"],
 				"Target": public,
-				"TTL_Sec": res["TTL_SEC"]
+				"TTL_Sec": res[0]["TTL_SEC"]
 			}
-			execute("domainResourceSave", request)
+			execute("domain.resource.update", request)
 			print("OK {0} -> {1}".format(old, public))
 			return 1
 		else:
